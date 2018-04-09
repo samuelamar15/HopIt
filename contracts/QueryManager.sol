@@ -1,7 +1,7 @@
 pragma solidity ^0.4.17;
 
 import "./Answer.sol";
-import "./Ownable.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 
 
 contract QueryManager is Ownable {
@@ -55,6 +55,10 @@ contract QueryManager is Ownable {
     token = _token;
   }
 
+  function getTokenAddress() public view returns(address) {
+    return token;
+  }
+
   function addQuery(
       uint256 _queryHash,
       uint _requestedPrice)
@@ -99,6 +103,6 @@ contract QueryManager is Ownable {
       address newAnswer = new Answer(_replier, msg.sender, token, _disputeTime, _price, _encryptedAnswerHash);
       queries[_queryHash].answers[_answerID] = newAnswer;
 
-      emit NEW_ANSWER(newAnswer, _replier, msg.sender, token, _disputeTime, _price, _encryptedAnswerHash);
+      NEW_ANSWER(newAnswer, _replier, msg.sender, token, _disputeTime, _price, _encryptedAnswerHash);
   }
 }

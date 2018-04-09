@@ -1,7 +1,7 @@
 
 pragma solidity ^0.4.17;
 
-import "./Ownable.sol";
+import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./Token.sol";
 
 contract Answer is Ownable {
@@ -66,6 +66,6 @@ contract Answer is Ownable {
       tokenObj.transferFrom(owner, this, price);
       disputeEndTimestamp = block.timestamp + disputeTime;
 
-      emit ANSWER_STARTED(disputeEndTimestamp);
+      ANSWER_STARTED(disputeEndTimestamp);
   }
 }
