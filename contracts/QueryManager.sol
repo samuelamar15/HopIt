@@ -20,17 +20,17 @@ contract QueryManager is Ownable {
 
 
   modifier answerDoesnotExists(uint256 _queryHash, uint _answerID) {
-      require(queries[_queryHash].answers[_answerID] == address(0x0));
+      require(queries[_queryHash].answers[_answerID] == address(0));
       _;
   }
 
   modifier queryDoesnotExist(uint256 _queryHash) {
-      require(queries[_queryHash].querier == address(0x0));
+      require(queries[_queryHash].querier == address(0));
       _;
   }
 
   modifier queryExists(uint256 _queryHash) {
-      require(queries[_queryHash].querier != address(0x0));
+      require(queries[_queryHash].querier != address(0));
       _;
   }
 
@@ -42,16 +42,19 @@ contract QueryManager is Ownable {
   // an event that signals to the server a new answer contract has been deployed.
   // if all data checks out, the querier will receive the answer.
   event NEW_ANSWER(
-      address contractAddress,
-      address replier,
-      address querier,
-      address token,
-      uint disputeTime,
-      uint price,
-      uint256 encryptedAnswerHash
+      address _contractAddress,
+      address _replier,
+      address _querier,
+      address _referrer,
+      address _admin,
+      address _token,
+      uint _disputeTime,
+      uint _price,
+      uint256 _encryptedAnswerHash
   );
 
   function QueryManager(address _token) public {
+    owner = msg.sender;
     token = _token;
   }
 
@@ -61,7 +64,8 @@ contract QueryManager is Ownable {
 
   function addQuery(
       uint256 _queryHash,
-      uint _requestedPrice)
+      uint _requestedPrice
+  )
       public
       queryDoesnotExist(_queryHash)
   {
@@ -77,7 +81,8 @@ contract QueryManager is Ownable {
 
   function getQueryAnswerAddress(
       uint256 _queryHash,
-      uint _answerID)
+      uint _answerID
+  )
       public
       view
       queryExists(_queryHash)
@@ -90,19 +95,23 @@ contract QueryManager is Ownable {
   function deployAnswer(
       uint256 _queryHash,
       address _replier,
+      address _referrer,
       uint _disputeTime,
       uint _price,
       uint256 _encryptedAnswerHash,
 
       // the ID received from the server the way it is logged on it
-      uint _answerID)
+      uint _answerID
+  )
       public
       isQueryOwner(_queryHash)
       answerDoesnotExists(_queryHash, _answerID)
   {
-      address newAnswer = new Answer(_replier, msg.sender, token, _disputeTime, _price, _encryptedAnswerHash);
+      address newAnswer = new Answer(_replier, msg.sender, _referrer, owner, token, _disputeTime, _price, _encryptedAnswerHash);
       queries[_queryHash].answers[_answerID] = newAnswer;
 
-      NEW_ANSWER(newAnswer, _replier, msg.sender, token, _disputeTime, _price, _encryptedAnswerHash);
+
+
+      NEW_ANSWER(newAnswer, _replier, msg.sender, _referrer, owner, token, _disputeTime, _price, _encryptedAnswerHash);
   }
 }

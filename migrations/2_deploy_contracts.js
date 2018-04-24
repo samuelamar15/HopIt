@@ -3,6 +3,6 @@ var QueryManager = artifacts.require("../contracts/QueryManager");
 
 module.exports = function(deployer) {
   deployer.deploy(Token).then(
-    ()=> deployer.deploy(QueryManager, Token.address)
+    () => deployer.deploy(QueryManager, Token.address)
   );
 };
