@@ -2,9 +2,11 @@ const QueryManager = artifacts.require("../contracts/QueryManager");
 const Token = artifacts.require("../contracts/Token");
 const Answer = artifacts.require("../contracts/Answer");
 
-async function deployAnswer(queryManagerInst, tokenInst, queryHash, replier, referrer, disputeTime, price, encryptedAnswerHash, answerID){
+const readline = require('readline');
+const sleep = require('sleep');
 
-  //// TODO: add token allowance here and make sure the querier sends to funds to the contract answer
+async function deployAnswer(queryManagerInst, tokenInst, queryHash, replier, referrer, disputeTime, price, encryptedAnswerHash, answerID){
+  await tokenInst.approve(queryManagerInst.address, price);
   await queryManagerInst.deployAnswer(queryHash, replier, referrer, disputeTime, price, encryptedAnswerHash, answerID);
   let answerAddr = await queryManagerInst.getQueryAnswerAddress(queryHash, answerID);
   let answerInst = Answer.at(answerAddr)
@@ -16,10 +18,20 @@ contract('QueryManager test', async (accounts) => {
   let tokenInst;
   let queryManagerInst;
 
-  beforeEach("Getting deployed Instances", async () => {
+  before("Getting deployed Instances", async () => {
     tokenInst = await Token.deployed();
     queryManagerInst = await QueryManager.deployed();
+
+    //for the purpose of testing the server and updationg the address that has been localy deployed
+    console.log("QueryManager: " + queryManagerInst.address);
+    console.log("Token: " + tokenInst.address);
+    sleep.sleep(15);
   });
+
+  // beforeEach("Getting deployed Instances", async () => {
+  //   tokenInst = await Token.deployed();
+  //   queryManagerInst = await QueryManager.deployed();
+  // });
 
   it("The token address is the one we deployed", async () => {
      let tokenAddress = await queryManagerInst.getTokenAddress.call();
@@ -58,12 +70,31 @@ contract('QueryManager test', async (accounts) => {
     let encryptedAnswerHash = 123456789;
     let answerID = 3;
 
-    let answerInst = await deployAnswer(queryManagerInst, queryHash, replier, referrer, disputeTime, price, encryptedAnswerHash, answerID);
-    let retrivedAnswerHash = await answerInst.getAnswerHash();
+    let querierBalanceBefore = await tokenInst.balanceOf(accounts[0]);
+    let replierBalanceBefore = await tokenInst.balanceOf(replier);
+
+    //TODO: add event listeners for new answer deployment and answer started
+    let answerInst = await deployAnswer(queryManagerInst, tokenInst, queryHash, replier, referrer, disputeTime, price, encryptedAnswerHash, answerID);
+
+    let retrievedDisputeTime = await answerInst.disputeTime();
+    assert.equal(retrievedDisputeTime, disputeTime);
+
+    let retrivedAnswerHash = await answerInst.encryptedAnswerHash();
     assert.equal(retrivedAnswerHash, encryptedAnswerHash);
 
-    let retrievedPrice = await answerInst.getPrice();
-    assert(retrievedPrice, price);
+    let retrievedPrice = await answerInst.price();
+    assert.equal(retrievedPrice, price);
+
+    //Test the answer fee can be redeemed
+    await answerInst.resolveDispute();
+    await answerInst.redeemAnswerFee();
+
+    let querierBalanceAfter = await tokenInst.balanceOf(accounts[0]);
+    console.log(querierBalanceAfter);
+    let replierBalanceAfter = await tokenInst.balanceOf(replier);
+
+    assert.equal(querierBalanceAfter + price, querierBalanceBefore + 0);
+    assert.equal(replierBalanceAfter - price, replierBalanceBefore + 0);
   });
 
   it("Deploying an answer with refferal", async () => {
@@ -75,12 +106,32 @@ contract('QueryManager test', async (accounts) => {
     let encryptedAnswerHash = 1234567890;
     let answerID = 4;
 
+    let querierBalanceBefore = await tokenInst.balanceOf(accounts[0]);
+    let replierBalanceBefore = await tokenInst.balanceOf(replier);
+    let referrerBalanceBefore = await tokenInst.balanceOf(referrer);
+
     let answerInst = await deployAnswer(queryManagerInst, tokenInst, queryHash, replier, referrer, disputeTime, price, encryptedAnswerHash, answerID);
-    let retrivedAnswerHash = await answerInst.getAnswerHash();
+
+    let retrievedDisputeTime = await answerInst.disputeTime();
+    assert.equal(retrievedDisputeTime, disputeTime);
+
+    let retrivedAnswerHash = await answerInst.encryptedAnswerHash();
     assert.equal(retrivedAnswerHash, encryptedAnswerHash);
 
-    let retrievedPrice = await answerInst.getPrice();
-    assert(retrievedPrice, price);
+    let retrievedPrice = await answerInst.price();
+    assert.equal(retrievedPrice, price);
+
+    //Test the answer fee can be redeemed with refferer
+    await answerInst.resolveDispute();
+    await answerInst.redeemAnswerFee();
+
+    let querierBalanceAfter = await tokenInst.balanceOf(accounts[0]);
+    let replierBalanceAfter = await tokenInst.balanceOf(replier);
+    let referrerBalanceAfter = await tokenInst.balanceOf(referrer);
+
+    assert.equal(querierBalanceAfter + price, querierBalanceBefore + 0);
+    assert.equal(replierBalanceAfter - price*0.9, replierBalanceBefore + 0);
+    assert.equal(referrerBalanceAfter - price*0.1, referrerBalanceBefore + 0);
   });
 
 });

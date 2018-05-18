@@ -5,16 +5,16 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./Token.sol";
 
 contract Answer is Ownable {
-  address replier;
-  address referrer = address(0);
-  address admin;
-  address token;
-  uint disputeTime;
-  // potential security issue with this. needs checking
-  uint256 disputeEndTimestamp = 2 ** 256 - 1;
-  uint price;
-  uint256 encryptedAnswerHash;
-  bool isInDispute = false;
+    address public replier;
+    address public referrer = address(0);
+    address public admin;
+    address public token;
+    uint public disputeTime;
+    // potential security issue with this. needs checking
+    uint256 public disputeEndTimestamp;
+    uint public price;
+    uint256 public encryptedAnswerHash;
+    bool public isInDispute = true;
 
   modifier answerWasPaid() {
     Token tokenObj = Token(token);
@@ -33,7 +33,7 @@ contract Answer is Ownable {
   }
 
   // an event that tells the server the answer was payed and it should send the querier the encrypted Answer.
-  event ANSWER_STARTED(uint disputeEndTimestamp);
+  event AnswerStarted(uint disputeEndTimestamp);
 
 
   function Answer(
@@ -56,8 +56,33 @@ contract Answer is Ownable {
       disputeTime = _disputeTime;
       price = _price;
       encryptedAnswerHash = _encryptedAnswerHash;
+      disputeEndTimestamp = block.timestamp + disputeTime;
 
-      startAnswerProcess();
+      AnswerStarted(disputeEndTimestamp);
+  }
+
+  function getReplier() public view returns(address) {
+      return replier;
+  }
+
+  function getReferrer() public view returns(address) {
+      return referrer;
+  }
+
+  function getQuerier() public view returns(address) {
+      return owner;
+  }
+
+  function getAdmin() public view returns(address) {
+      return admin;
+  }
+
+  function getToken() public view returns(address) {
+      return token;
+  }
+
+  function getDisputeTime() public view returns(uint) {
+      return disputeTime;
   }
 
   function getPrice() public view returns(uint) {
@@ -89,14 +114,6 @@ contract Answer is Ownable {
       } else {
           tokenObj.transfer(replier, balance);
       }
-  }
-
-  function startAnswerProcess() internal {
-      Token tokenInst = Token(token);
-      tokenInst.transferFrom(owner, this, price);
-      disputeEndTimestamp = block.timestamp + disputeTime;
-
-      ANSWER_STARTED(disputeEndTimestamp);
   }
 
   function confiscateFunds()

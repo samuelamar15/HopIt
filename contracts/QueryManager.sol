@@ -39,18 +39,19 @@ contract QueryManager is Ownable {
       _;
   }
 
+  // an event that signals to the server a new query has been added
+  event NewQuery(
+      address querier,
+      uint256 queryHash,
+      uint requestedPrice
+  );
+
   // an event that signals to the server a new answer contract has been deployed.
   // if all data checks out, the querier will receive the answer.
-  event NEW_ANSWER(
-      address _contractAddress,
-      address _replier,
-      address _querier,
-      address _referrer,
-      address _admin,
-      address _token,
-      uint _disputeTime,
-      uint _price,
-      uint256 _encryptedAnswerHash
+  event NewAnswer(
+      uint answerID,
+      uint256 queryHash,
+      uint256 encryptedAnswerHash
   );
 
   function QueryManager(address _token) public {
@@ -73,6 +74,8 @@ contract QueryManager is Ownable {
           querier: msg.sender,
           requestedPrice: _requestedPrice
       });
+
+      NewQuery(msg.sender, _queryHash, _requestedPrice);
   }
 
   function getQueryData(uint256 _queryHash) public view returns(address, uint) {
@@ -109,9 +112,10 @@ contract QueryManager is Ownable {
   {
       address newAnswer = new Answer(_replier, msg.sender, _referrer, owner, token, _disputeTime, _price, _encryptedAnswerHash);
       queries[_queryHash].answers[_answerID] = newAnswer;
+      Token tokenInst = Token(token);
+      tokenInst.transferFrom(msg.sender, newAnswer, _price);
 
 
-
-      NEW_ANSWER(newAnswer, _replier, msg.sender, _referrer, owner, token, _disputeTime, _price, _encryptedAnswerHash);
+      NewAnswer(_answerID, _queryHash, _encryptedAnswerHash);
   }
 }
