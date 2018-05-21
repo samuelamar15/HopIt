@@ -10,31 +10,31 @@ contract QueryManager is Ownable {
   //query hash to QueryObject
   //the query hash is constructed by a hash on the queriers address and the query text itself,
   //perhaps will add a nonce too later.
-  mapping(uint256 => Query) queries;
+  mapping(bytes32 => Query) queries;
 
   struct Query {
     address querier;
     uint requestedPrice;
-    mapping(uint => address) answers;
+    mapping(bytes => address) answers;
   }
 
 
-  modifier answerDoesnotExists(uint256 _queryHash, uint _answerID) {
+  modifier answerDoesnotExists(bytes32 _queryHash, bytes _answerID) {
       require(queries[_queryHash].answers[_answerID] == address(0));
       _;
   }
 
-  modifier queryDoesnotExist(uint256 _queryHash) {
+  modifier queryDoesnotExist(bytes32 _queryHash) {
       require(queries[_queryHash].querier == address(0));
       _;
   }
 
-  modifier queryExists(uint256 _queryHash) {
+  modifier queryExists(bytes32 _queryHash) {
       require(queries[_queryHash].querier != address(0));
       _;
   }
 
-  modifier isQueryOwner(uint256 _queryHash) {
+  modifier isQueryOwner(bytes32 _queryHash) {
       require(msg.sender == queries[_queryHash].querier);
       _;
   }
@@ -42,16 +42,16 @@ contract QueryManager is Ownable {
   // an event that signals to the server a new query has been added
   event NewQuery(
       address querier,
-      uint256 queryHash,
+      bytes32 queryHash,
       uint requestedPrice
   );
 
   // an event that signals to the server a new answer contract has been deployed.
   // if all data checks out, the querier will receive the answer.
   event NewAnswer(
-      uint answerID,
-      uint256 queryHash,
-      uint256 encryptedAnswerHash
+      bytes answerID,
+      bytes32 queryHash,
+      bytes32 encryptedAnswerHash
   );
 
   function QueryManager(address _token) public {
@@ -64,7 +64,7 @@ contract QueryManager is Ownable {
   }
 
   function addQuery(
-      uint256 _queryHash,
+      bytes32 _queryHash,
       uint _requestedPrice
   )
       public
@@ -78,13 +78,13 @@ contract QueryManager is Ownable {
       NewQuery(msg.sender, _queryHash, _requestedPrice);
   }
 
-  function getQueryData(uint256 _queryHash) public view returns(address, uint) {
+  function getQueryData(bytes32 _queryHash) public view returns(address, uint) {
       return (queries[_queryHash].querier, queries[_queryHash].requestedPrice);
   }
 
   function getQueryAnswerAddress(
-      uint256 _queryHash,
-      uint _answerID
+      bytes32 _queryHash,
+      bytes _answerID
   )
       public
       view
@@ -96,15 +96,15 @@ contract QueryManager is Ownable {
 
   //this will create a new answer for the query
   function deployAnswer(
-      uint256 _queryHash,
+      bytes32 _queryHash,
       address _replier,
       address _referrer,
       uint _disputeTime,
       uint _price,
-      uint256 _encryptedAnswerHash,
+      bytes32 _encryptedAnswerHash,
 
       // the ID received from the server the way it is logged on it
-      uint _answerID
+      bytes _answerID
   )
       public
       isQueryOwner(_queryHash)

@@ -25,7 +25,7 @@ contract('QueryManager test', async (accounts) => {
     //for the purpose of testing the server and updationg the address that has been localy deployed
     console.log("QueryManager: " + queryManagerInst.address);
     console.log("Token: " + tokenInst.address);
-    sleep.sleep(15);
+    //sleep.sleep(15);
   });
 
   // beforeEach("Getting deployed Instances", async () => {
@@ -44,7 +44,7 @@ contract('QueryManager test', async (accounts) => {
   });
 
   it("Adding a query to the system", async () => {
-    let queryHash = 1;
+    let queryHash = web3.sha3("a1");
     let queryPrice = 100;
     await queryManagerInst.addQuery(queryHash, queryPrice);
     let result = await queryManagerInst.getQueryData(queryHash);
@@ -53,7 +53,7 @@ contract('QueryManager test', async (accounts) => {
   });
 
   it("Adding a seconde query to the system", async () => {
-    let queryHash = 2;
+    let queryHash = web3.sha3("b2");
     let queryPrice = 200;
     await queryManagerInst.addQuery(queryHash, queryPrice);
     let result = await queryManagerInst.getQueryData(queryHash);
@@ -62,13 +62,13 @@ contract('QueryManager test', async (accounts) => {
   });
 
   it("Deploying an answer without refferal", async () => {
-    let queryHash = 1;
+    let queryHash = web3.sha3("a1");
     let replier = accounts[1];
     let referrer = "0x0";
     let disputeTime = 100;
     let price = 1000;
-    let encryptedAnswerHash = 123456789;
-    let answerID = 3;
+    let encryptedAnswerHash = web3.sha3("c3");
+    let answerID = "cc3";
 
     let querierBalanceBefore = await tokenInst.balanceOf(accounts[0]);
     let replierBalanceBefore = await tokenInst.balanceOf(replier);
@@ -85,6 +85,9 @@ contract('QueryManager test', async (accounts) => {
     let retrievedPrice = await answerInst.price();
     assert.equal(retrievedPrice, price);
 
+    let retrievedAnswerAddress = await queryManagerInst.getQueryAnswerAddress(queryHash, answerID);
+    assert.equal(retrievedAnswerAddress, answerInst.address);
+
     //Test the answer fee can be redeemed
     await answerInst.resolveDispute();
     await answerInst.redeemAnswerFee();
@@ -98,13 +101,13 @@ contract('QueryManager test', async (accounts) => {
   });
 
   it("Deploying an answer with refferal", async () => {
-    let queryHash = 1;
+    let queryHash = web3.sha3("a1");
     let replier = accounts[1];
     let referrer = accounts[2];
     let disputeTime = 100;
     let price = 1000;
-    let encryptedAnswerHash = 1234567890;
-    let answerID = 4;
+    let encryptedAnswerHash = web3.sha3("d4");
+    let answerID = "dd4";
 
     let querierBalanceBefore = await tokenInst.balanceOf(accounts[0]);
     let replierBalanceBefore = await tokenInst.balanceOf(replier);
@@ -120,6 +123,9 @@ contract('QueryManager test', async (accounts) => {
 
     let retrievedPrice = await answerInst.price();
     assert.equal(retrievedPrice, price);
+
+    let retrievedAnswerAddress = await queryManagerInst.getQueryAnswerAddress(queryHash, answerID);
+    assert.equal(retrievedAnswerAddress, answerInst.address);
 
     //Test the answer fee can be redeemed with refferer
     await answerInst.resolveDispute();

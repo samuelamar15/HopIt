@@ -13,7 +13,7 @@ contract Answer is Ownable {
     // potential security issue with this. needs checking
     uint256 public disputeEndTimestamp;
     uint public price;
-    uint256 public encryptedAnswerHash;
+    bytes32 public encryptedAnswerHash;
     bool public isInDispute = true;
 
   modifier answerWasPaid() {
@@ -44,7 +44,7 @@ contract Answer is Ownable {
     address _token,
     uint _disputeTime,
     uint _price,
-    uint256 _encryptedAnswerHash
+    bytes32 _encryptedAnswerHash
   )
     public
   {
@@ -59,38 +59,6 @@ contract Answer is Ownable {
       disputeEndTimestamp = block.timestamp + disputeTime;
 
       AnswerStarted(disputeEndTimestamp);
-  }
-
-  function getReplier() public view returns(address) {
-      return replier;
-  }
-
-  function getReferrer() public view returns(address) {
-      return referrer;
-  }
-
-  function getQuerier() public view returns(address) {
-      return owner;
-  }
-
-  function getAdmin() public view returns(address) {
-      return admin;
-  }
-
-  function getToken() public view returns(address) {
-      return token;
-  }
-
-  function getDisputeTime() public view returns(uint) {
-      return disputeTime;
-  }
-
-  function getPrice() public view returns(uint) {
-      return price;
-  }
-
-  function getAnswerHash() public view returns(uint256){
-      return encryptedAnswerHash;
   }
 
   function startDispute() onlyOwner() public {
