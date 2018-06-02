@@ -23,8 +23,6 @@ contract('QueryManager test', async (accounts) => {
     queryManagerInst = await QueryManager.deployed();
 
     //for the purpose of testing the server and updationg the address that has been localy deployed
-    console.log("QueryManager: " + queryManagerInst.address);
-    console.log("Token: " + tokenInst.address);
     //sleep.sleep(15);
   });
 
@@ -89,15 +87,14 @@ contract('QueryManager test', async (accounts) => {
     assert.equal(retrievedAnswerAddress, answerInst.address);
 
     //Test the answer fee can be redeemed
-    await answerInst.resolveDispute();
-    await answerInst.redeemAnswerFee();
+    await answerInst.startDispute();
+    await answerInst.declineDispute();
 
     let querierBalanceAfter = await tokenInst.balanceOf(accounts[0]);
-    console.log(querierBalanceAfter);
     let replierBalanceAfter = await tokenInst.balanceOf(replier);
 
-    assert.equal(querierBalanceAfter + price, querierBalanceBefore + 0);
-    assert.equal(replierBalanceAfter - price, replierBalanceBefore + 0);
+    assert.equal(querierBalanceAfter.toNumber() + price, querierBalanceBefore.toNumber());
+    assert.equal(replierBalanceAfter.toNumber() - price, replierBalanceBefore.toNumber());
   });
 
   it("Deploying an answer with refferal", async () => {
@@ -128,16 +125,16 @@ contract('QueryManager test', async (accounts) => {
     assert.equal(retrievedAnswerAddress, answerInst.address);
 
     //Test the answer fee can be redeemed with refferer
-    await answerInst.resolveDispute();
-    await answerInst.redeemAnswerFee();
+    await answerInst.startDispute();
+    await answerInst.declineDispute();
 
     let querierBalanceAfter = await tokenInst.balanceOf(accounts[0]);
     let replierBalanceAfter = await tokenInst.balanceOf(replier);
     let referrerBalanceAfter = await tokenInst.balanceOf(referrer);
 
-    assert.equal(querierBalanceAfter + price, querierBalanceBefore + 0);
-    assert.equal(replierBalanceAfter - price*0.9, replierBalanceBefore + 0);
-    assert.equal(referrerBalanceAfter - price*0.1, referrerBalanceBefore + 0);
+    assert.equal(querierBalanceAfter.toNumber() + price, querierBalanceBefore.toNumber());
+    assert.equal(replierBalanceAfter.toNumber() - price*0.9, replierBalanceBefore.toNumber());
+    assert.equal(referrerBalanceAfter.toNumber() - price*0.1, referrerBalanceBefore.toNumber());
   });
 
 });
