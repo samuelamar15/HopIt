@@ -5,15 +5,33 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 import "./Token.sol";
 
 contract Answer is Ownable {
+    // The replier to the answer
     address public replier;
-    address public referrer = address(0);
+
+    // The last referrer of the address if he exists
+    address public referrer;
+
+    // HopIt Admin
     address public admin;
+
+    // The address of the Koin token
     address public token;
+
+    // The amount of time the querier has to opn a dispute
     uint public disputeTime;
+
+    // A timestemp for the end of the dispute period
     uint256 public disputeEndTimestamp;
+
+    // The amount of tokens the question costs
     uint public price;
+
+    // The encrypted answer hash
     bytes32 public encryptedAnswerHash;
+
+    // A flag for the dispute mode
     bool public isInDispute;
+
 
     modifier answerWasPaid() {
         Token tokenObj = Token(token);
@@ -41,15 +59,19 @@ contract Answer is Ownable {
         _;
     }
 
-    // an event that tells the server the answer was payed and it should send the querier the encrypted Answer.
+    // Tells the server the answer was payed and it should send the querier the encrypted Answer.
     event AnswerStarted(uint disputeEndTimestamp);
 
+    // Tells the server a dispute has been started.
     event DisputeStarted();
 
+    // Tells the server a dispute has been approved.
     event DisputeApproved();
 
+    // Tells the server a dispute has been declined.
     event DisputeDecliend();
 
+    // Tells the server answer fees were sent to the replier and refferer.
     event AnswerFeeRedeemed();
 
 
@@ -79,9 +101,12 @@ contract Answer is Ownable {
         emit AnswerStarted(disputeEndTimestamp);
     }
 
+    /*
+        @dev starts a dispute by the querier, only during a valid dispute time
+    */
     function startDispute() isInDisputePeriod onlyOwner public {
         isInDispute = true;
-        
+
         emit DisputeStarted();
     }
 
@@ -96,11 +121,17 @@ contract Answer is Ownable {
         }
     }
 
+    /*
+        @dev transfers funds to the replier and the reffer (if he exists) for a valid reply.
+    */
     function redeemAnswerFee() answerWasPaid disputeIsOver public {
       redeemAnswerFeeInternal();
+
       emit AnswerFeeRedeemed();
   }
-
+    /*
+        @dev Admin aproves a dispute and returns the funds to the querier
+    */
     function approveDispute() currentlyInDispute onlyAdmin public {
         Token tokenInst = Token(token);
         uint balance = tokenInst.balanceOf(this);
@@ -109,8 +140,12 @@ contract Answer is Ownable {
         emit DisputeApproved();
     }
 
+    /*
+        @dev Admin declines a dispute and returns the funds to the replier and refferer
+    */
     function declineDispute() currentlyInDispute onlyAdmin public {
         redeemAnswerFeeInternal();
+
         emit DisputeDecliend();
     }
 }

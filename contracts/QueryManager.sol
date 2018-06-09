@@ -7,17 +7,21 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
 contract QueryManager is Ownable {
 
     struct Query {
+        // The Address of the querys querier
         address querier;
+
+        // The amount of koin the querier bids
         uint requestedPrice;
+
+        // A map between the calculated query hash and the address of the deployed answer contract
         mapping(bytes => address) answers;
     }
 
+    // The address of the Koin Token
     address token;
 
-    /*
-        query hash to QueryObject
-        the query hash is constructed by a hash on the queriers address and the query text itself
-    */
+    // query hash to QueryObject
+    // the query hash is constructed by a hash on the queriers address and the query text itself
     mapping(bytes32 => Query) queries;
 
 
@@ -61,14 +65,18 @@ contract QueryManager is Ownable {
         token = _token;
     }
 
-    /// @dev transfer tokens to participants
-
+    /*
+        @dev returns the token address
+    */
     function getTokenAddress() public view returns(address) {
         return token;
     }
 
-    /// @dev transfer tokens to participants
-
+    /*
+        @dev adds a query to the system
+        @param _queryHash is the calculated query hash as is saved in the DB
+        @param _requestedPrice is the bid the querier makes for an answer
+    */
     function addQuery(bytes32 _queryHash, uint _requestedPrice)
         queryDoesnotExist(_queryHash)
         public
@@ -81,8 +89,10 @@ contract QueryManager is Ownable {
         emit NewQuery(msg.sender, _queryHash, _requestedPrice);
     }
 
-    /// @dev transfer tokens to participants
-
+    /*
+        @dev returns the requested price and the address of the querier
+        @param _queryHash is the calculated query hash as is saved in the DB and mapping
+    */
     function getQueryData(bytes32 _queryHash)
         public
         view
@@ -91,8 +101,12 @@ contract QueryManager is Ownable {
         return (queries[_queryHash].querier, queries[_queryHash].requestedPrice);
     }
 
-    /// @dev transfer tokens to participants
-
+    /*
+        @dev returns for a query representerd by the queryHash and the according
+             answer represented by answerID, the answers contract address
+        @param _queryHash is the calculated query hash as is saved in the DB and mapping
+        @param _answerID is the answer ID as saved in the HopIt DB
+    */
     function getQueryAnswerAddress(
         bytes32 _queryHash,
         bytes _answerID
@@ -105,9 +119,19 @@ contract QueryManager is Ownable {
         return (queries[_queryHash].answers[_answerID]);
     }
 
-    //this will create a new answer for the query
-    /// @dev transfer tokens to participants
 
+    /*
+        @dev deployes a new answer contract to the system for the specified query
+             and transfers the funds to it. This functions assumes the querier has
+             has granted an allowes the size of _price for koin tokens to this contract
+        @param _queryHash is the calculated query hash as is saved in the DB and mapping
+        @param _replier the address of the creator of the answer
+        @param _referrer the last referre of this query if there is one
+        @param _disputeTime The amount of time the querier has to opn a dispute
+        @param _price The amount of tokens the question costs
+        @param _encryptedAnswerHash The hash of the answers body after encryption
+        @param _answerID The ID of this answer as represented in HopIt DB
+    */
     function deployAnswer(
         bytes32 _queryHash,
         address _replier,
