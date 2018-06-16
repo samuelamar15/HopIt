@@ -13,7 +13,7 @@ contract Token is StandardToken, Ownable {
     string public name = "KOIN";
     string public symbol = "KOIN";
     uint public decimals = 18;
-    uint256 public totalSupply = 756*10**6; //756,000,000;
+    uint256 public totalSupply = 756*(10**6) * (10**18) ; //756,000,000;
 
     constructor() public {
         owner = msg.sender;
